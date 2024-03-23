@@ -78,7 +78,7 @@ func main() {
 	msgRoute.GET("", controller.GetMessages)
 
 	// Routes for websocket connection - chat
-	wsRoute := protectedRoute.Group("/ws")
+	wsRoute := protectedRoute.Group("/websocket")
 	wsRoute.GET("", socketHandler.HandleConnection)
 
 	// Start the webserver
