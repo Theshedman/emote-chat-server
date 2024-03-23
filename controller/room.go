@@ -5,7 +5,6 @@ import (
 	"chat-server/dto"
 	"chat-server/repository"
 	"context"
-	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo/v4"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -19,9 +18,8 @@ func Join(c echo.Context) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	user := c.Get("user").(*jwt.Token)
-	claims := user.Claims.(*auth.JwtCustomClaims)
-	participant, err := primitive.ObjectIDFromHex(claims.Subject)
+	principal := auth.GetPrincipal(c)
+	participant, err := primitive.ObjectIDFromHex(principal.ID)
 	if err != nil {
 		badRequest := echo.ErrBadRequest
 		badRequest.Message = err

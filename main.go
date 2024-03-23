@@ -59,7 +59,7 @@ func main() {
 	// Public route for metrics
 	e.GET("/metrics", echoprometheus.NewHandler())
 
-	// Auth route for signup and login
+	// Auth route for signup and login,
 	// these routes are public and does not require authentication
 	authRoute := e.Group("/auth")
 	authRoute.POST("/signup", controller.Signup)
@@ -68,16 +68,16 @@ func main() {
 	// Protected routes grouped according to their resources
 	protectedRoute := e.Group("", echojwt.WithConfig(auth.JwtCustomConfig()))
 
-	// Routes for the room resource
+	// Protected: Routes for the room resource
 	roomRoute := protectedRoute.Group("/rooms")
 	roomRoute.GET("", controller.GetRooms)
 	roomRoute.POST("/:roomName/join", controller.Join)
 
-	// Routes for the message resource
+	// Protected: Routes for the message resource
 	msgRoute := protectedRoute.Group("/messages")
 	msgRoute.GET("", controller.GetMessages)
 
-	// Routes for websocket connection - chat
+	// Protected: Routes for websocket connection - chat
 	wsRoute := protectedRoute.Group("/websocket")
 	wsRoute.GET("", socketHandler.HandleConnection)
 

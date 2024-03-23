@@ -13,8 +13,7 @@ type RoomModel struct {
 }
 
 func NewRoom() *Model[*RoomModel] {
-
-	userCollection := Database.Collection("rooms")
+	userCollection := Database.Collection(Rooms)
 
 	return newModel[*RoomModel](userCollection)
 }

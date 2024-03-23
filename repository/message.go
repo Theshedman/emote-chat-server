@@ -15,8 +15,7 @@ type MessageModel struct {
 }
 
 func NewMessage() *Model[*MessageModel] {
-
-	userCollection := Database.Collection("messages")
+	userCollection := Database.Collection(Message)
 
 	return newModel[*MessageModel](userCollection)
 }

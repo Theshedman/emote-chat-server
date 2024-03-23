@@ -9,6 +9,13 @@ import (
 	"time"
 )
 
+// Constants representing allowed DB names
+const (
+	Rooms   = "rooms"
+	User    = "users"
+	Message = "messages"
+)
+
 var Database *mongo.Database
 
 func SetupDatabase() {
@@ -24,7 +31,7 @@ func SetupDatabase() {
 
 	clientOptions := options.Client().ApplyURI(dbURL)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second) // 10 second timeout
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second) // 10 second timeouts
 	defer cancel()
 
 	client, err := mongo.Connect(ctx, clientOptions)

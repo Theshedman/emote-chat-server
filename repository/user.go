@@ -15,7 +15,7 @@ type UserModel struct {
 }
 
 func NewUser() *Model[*UserModel] {
-	userCollection := Database.Collection("users")
+	userCollection := Database.Collection(User)
 
 	return newModel[*UserModel](userCollection)
 }

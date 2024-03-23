@@ -42,6 +42,7 @@ func (r *RabbitMQ) Close() {
 	if err != nil {
 		return
 	}
+
 	err = r.conn.Close()
 	if err != nil {
 		return

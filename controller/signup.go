@@ -6,12 +6,11 @@ import (
 	"chat-server/password"
 	"chat-server/repository"
 	"context"
-	"github.com/golang-jwt/jwt/v5"
+	"fmt"
 	"github.com/labstack/echo/v4"
 	"go.mongodb.org/mongo-driver/bson"
 	"log"
 	"net/http"
-	"os"
 	"time"
 )
 
@@ -54,23 +53,9 @@ func Signup(c echo.Context) error {
 		return err
 	}
 
-	// Set custom claims
-	claims := &auth.JwtCustomClaims{
-		UserName: (*newUser).Username,
-		RegisteredClaims: jwt.RegisteredClaims{
-			Subject:   (*newUser).ID.Hex(),
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 72)),
-		},
-	}
-
-	// Create token with claims
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-
-	// Generate encoded token and send it as response.
-	jwtSecret := os.Getenv("JWT_SECRET")
-	authToken, err := token.SignedString([]byte(jwtSecret))
+	authToken, err := auth.GenToken(*newUser)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to generate auth token: %w", err)
 	}
 
 	return c.JSON(http.StatusOK, echo.Map{

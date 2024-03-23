@@ -26,12 +26,13 @@ func JwtCustomConfig() echojwt.Config {
 	}
 }
 
+// GenToken generate jwt token
 func GenToken(userModel *repository.UserModel) (string, error) {
 	claims := &JwtCustomClaims{
 		UserName: (*userModel).Username,
 		RegisteredClaims: jwt.RegisteredClaims{
 			Subject:   (*userModel).ID.Hex(),
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 72)),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Minute * 15)),
 		},
 	}
 
