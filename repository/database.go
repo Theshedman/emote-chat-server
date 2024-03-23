@@ -12,8 +12,17 @@ import (
 var Database *mongo.Database
 
 func SetupDatabase() {
-	mongoURL := os.Getenv("DB_URL")
-	clientOptions := options.Client().ApplyURI(mongoURL)
+	dbURL := os.Getenv("DB_URL")
+	if dbURL == "" {
+		log.Fatal("DB_URL environment variable not set")
+	}
+
+	dbName := os.Getenv("DB_NAME")
+	if dbName == "" {
+		log.Fatal("DB_NAME environment variable not set")
+	}
+
+	clientOptions := options.Client().ApplyURI(dbURL)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second) // 10 second timeout
 	defer cancel()
@@ -28,5 +37,5 @@ func SetupDatabase() {
 		log.Fatal(err)
 	}
 
-	Database = client.Database("emote")
+	Database = client.Database(dbName)
 }
