@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/rabbitmq/amqp091-go"
+	"log"
 	"os"
 )
 
@@ -19,6 +20,10 @@ type RabbitMQ struct {
 
 func New() (*RabbitMQ, error) {
 	uri := os.Getenv("RABBITMQ_URL")
+	if uri == "" {
+		log.Fatal("RABBITMQ_URL environment variable not set")
+	}
+
 	conn, err := amqp091.Dial(uri)
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to RabbitMQ: %w", err)
