@@ -83,6 +83,9 @@ func main() {
 
 	// Start the webserver
 	serverPort := os.Getenv("SERVER_PORT")
+	if serverPort == "" {
+		serverPort = "8080"
+	}
 	server := http.Server{
 		Addr:    ":" + serverPort,
 		Handler: e,
