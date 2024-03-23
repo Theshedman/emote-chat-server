@@ -36,7 +36,7 @@ func main() {
 	// Load .env file to system environment
 	err := godotenv.Load()
 	if err != nil {
-		log.Fatal("Error loading .env file")
+		log.Println("no .env file present on the server project path")
 	}
 
 	// Initialize RabbitMQ connection
