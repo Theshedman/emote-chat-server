@@ -24,7 +24,7 @@ func Login(c echo.Context) error {
 
 	userRepository := repository.NewUser()
 
-	filter := bson.M{"user_name": loginData.Username}
+	filter := bson.M{"username": loginData.Username}
 	userModel, err := userRepository.FindOne(ctx, filter)
 	if err != nil {
 		unAuthorizeErr := echo.ErrUnauthorized
