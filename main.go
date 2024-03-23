@@ -29,7 +29,7 @@ func main() {
 	e.Use(middleware.RemoveTrailingSlash())
 	e.Use(echoprometheus.NewMiddleware("chatServer"))
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
-		AllowOrigins: []string{"*"},
+		AllowOrigins: []string{"*"}, // This is only for demo's sake. CORS domains needed for production use
 		AllowMethods: []string{http.MethodGet, http.MethodPut, http.MethodPost, http.MethodDelete},
 	}))
 
