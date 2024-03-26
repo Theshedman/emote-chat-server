@@ -29,7 +29,7 @@ func Signup(c echo.Context) error {
 		return err
 	}
 
-	existingUser, err := userRepository.FindOne(ctx, bson.M{"user_name": modelData.Username})
+	existingUser, err := userRepository.FindOne(ctx, bson.M{"username": modelData.Username})
 	if err != nil {
 		log.Println("username is free.")
 	}
