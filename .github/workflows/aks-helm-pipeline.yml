@@ -1,37 +1,3 @@
-# This workflow will build and push an application to a Azure Kubernetes Service (AKS) cluster when you push your code
-#
-# This workflow assumes you have already created the target AKS cluster and have created an Azure Container Registry (ACR)
-# The ACR should be attached to the AKS cluster
-# For instructions see:
-#   - https://docs.microsoft.com/en-us/azure/aks/kubernetes-walkthrough-portal
-#   - https://docs.microsoft.com/en-us/azure/container-registry/container-registry-get-started-portal
-#   - https://learn.microsoft.com/en-us/azure/aks/cluster-container-registry-integration?tabs=azure-cli#configure-acr-integration-for-existing-aks-clusters
-#   - https://github.com/Azure/aks-create-action
-#
-# To configure this workflow:
-#
-# 1. Set the following secrets in your repository (instructions for getting these
-#    https://docs.microsoft.com/en-us/azure/developer/github/connect-from-azure?tabs=azure-cli%2Clinux)):
-#    - AZURE_CLIENT_ID
-#    - AZURE_TENANT_ID
-#    - AZURE_SUBSCRIPTION_ID
-#
-# 2. Set the following environment variables (or replace the values below):
-#    - AZURE_CONTAINER_REGISTRY (name of your container registry / ACR)
-#    - CONTAINER_NAME (name of the container image you would like to push up to your ACR)
-#    - RESOURCE_GROUP (where your cluster is deployed)
-#    - CLUSTER_NAME (name of your AKS cluster)
-#    - IMAGE_PULL_SECRET_NAME (name of the ImagePullSecret that will be created to pull your ACR image)
-#
-# 3. Choose the appropriate render engine for the bake step https://github.com/Azure/k8s-bake. The config below assumes Helm.
-#    Set your helmChart, overrideFiles, overrides, and helm-version to suit your configuration.
-#    - CHART_PATH (path to your helm chart)
-#    - CHART_OVERRIDE_PATH (path to your helm chart with override values)
-#
-# For more information on GitHub Actions for Azure, refer to https://github.com/Azure/Actions
-# For more samples to get started with GitHub Action workflows to deploy to Azure, refer to https://github.com/Azure/actions-workflow-samples
-# For more options with the actions used below please refer to https://github.com/Azure/login
-
 name: Build and deploy an app to AKS with Helm
 
 on:
@@ -40,12 +6,11 @@ on:
   workflow_dispatch:
 
 env:
-  AZURE_CONTAINER_REGISTRY: "your-azure-container-registry"
-  CONTAINER_NAME: "your-container-name"
-  RESOURCE_GROUP: "your-resource-group"
-  CLUSTER_NAME: "your-cluster-name"
-  CHART_PATH: "your-chart-path"
-  CHART_OVERRIDE_PATH: "your-chart-override-path"
+  AZURE_CONTAINER_REGISTRY: "zigah"
+  CONTAINER_NAME: "emote-chat-server"
+  RESOURCE_GROUP: "ziga-rg"
+  CLUSTER_NAME: "ziga-cluster"
+  CHART_PATH: "../../.chart"
 
 jobs:
   buildImage:
@@ -110,9 +75,6 @@ jobs:
         with:
           renderEngine: "helm"
           helmChart: ${{ env.CHART_PATH }}
-          overrideFiles: ${{ env.CHART_OVERRIDE_PATH }}
-          overrides: |
-            replicas:2
           helm-version: "latest"
         id: bake
 
