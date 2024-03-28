@@ -19,7 +19,7 @@ app:
     secret:
       name: "secret-volume"
 
-  image: ''
+  image: ""
 
   container:
     port: 8089
