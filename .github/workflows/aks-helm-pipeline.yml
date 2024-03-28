@@ -10,7 +10,7 @@ env:
   CONTAINER_NAME: "emote-chat-server"
   RESOURCE_GROUP: "ziga-rg"
   CLUSTER_NAME: "ziga-cluster"
-  CHART_PATH: "../../.chart"
+  CHART_PATH: ".chart"
 
 jobs:
   buildImage:
