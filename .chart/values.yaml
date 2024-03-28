@@ -1,0 +1,66 @@
+nameOverride: ""
+fullNameOverride: ""
+serviceAccount:
+  name: ""
+  create: false
+
+app:
+  name: "emote-chat-server"
+  env: staging
+
+  secret:
+    name: emote-chat-server-secrets
+
+  labels:
+    tier: backend
+    role: service
+
+  volume:
+    secret:
+      name: "secret-volume"
+
+  image: ''
+
+  container:
+    port: 8089
+    portName: container-port
+  replicas: 1
+
+  resources:
+    requests:
+      memory: "400Mi"
+      cpu: "200m"
+    limits:
+      memory: "450Mi"
+      cpu: "250m"
+
+  restartPolicies:
+    startupProbe:
+      httpGet:
+        httpHeaders:
+          - name: Accept
+            value: application/json
+        path: /health
+        port: 8089
+      failureThreshold: 30
+      periodSeconds: 45
+    readinessProbe:
+      httpGet:
+        httpHeaders:
+          - name: Accept
+            value: application/json
+        path: /health
+        port: 8089
+      initialDelaySeconds: 5
+      failureThreshold: 5
+      successThreshold: 2
+      periodSeconds: 2
+    livenessProbe:
+      httpGet:
+        httpHeaders:
+          - name: Accept
+            value: application/json
+        path: /health
+        port: 8089
+      initialDelaySeconds: 1
+      periodSeconds: 60

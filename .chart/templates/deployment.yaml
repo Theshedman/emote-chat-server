@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "emote-chat-server.name" . }}
+  labels:
+    {{- include "emote-chat-server.labels" . | nindent 4 }}
+  annotations:
+    reloader.stakater.com/auto: "true"
+spec:
+  replicas: {{ .Values.app.replicas }}
+  selector:
+    matchLabels:
+      app: {{ include "emote-chat-server.name" . }}
+  template:
+    metadata:
+      labels:
+        {{- include "emote-chat-server.labels" . | nindent 8 }}
+    spec:
+      containers:
+      -  name: "zigah.azurecr.io"
+         image: {{ printf "%s" .Values.app.image }}
+         ports:
+         -  name: {{ .Values.app.container.portName }}
+            containerPort: {{ .Values.app.container.port }}
+         startupProbe:
+           {{- toYaml .Values.app.restartPolicies.startupProbe | nindent 12 }}
+         readinessProbe:
+           {{- toYaml .Values.app.restartPolicies.readinessProbe | nindent 12 }}
+         livenessProbe:
+           {{- toYaml .Values.app.restartPolicies.livenessProbe | nindent 12 }}
+
+         envFrom:
+           - secretRef:
+               name: {{ .Values.app.secret.name }}
+      imagePullSecrets:
+        - name: image-registry

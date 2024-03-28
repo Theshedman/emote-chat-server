@@ -19,5 +19,5 @@ RUN chown emoteUser:emoteUser server
 # Switch to the non-root user
 USER emoteUser
 
-EXPOSE 8080
+EXPOSE 8089
 CMD ["./server"]

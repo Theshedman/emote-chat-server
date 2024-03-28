@@ -1,0 +1,14 @@
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: {{ printf "%s-%s-%s-%s" "letsencrypt" .Values.app.env "emote-chat" "server" }}
+spec:
+  acme:
+    server: https://acme-v02.api.letsencrypt.org/directory
+    email: t@zigah.co
+    privateKeySecretRef:
+      name: {{ printf "%s-%s-%s-%s" "letsencrypt" .Values.app.env "emote-chat" "server" }}
+    solvers:
+      - http01:
+          ingress:
+            class: nginx
