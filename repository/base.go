@@ -90,12 +90,20 @@ func (m *Model[T]) FindOne(ctx context.Context, filter interface{}) (*T, error) 
 	return &entity, nil
 }
 
-func (m *Model[T]) Find(ctx context.Context, page int, limit int) ([]*T, error) {
+func (m *Model[T]) Find(ctx context.Context, filter interface{}, page int, limit int, sortKey string) ([]*T, error) {
 	findOptions := options.Find()
 	findOptions.SetSkip(int64((page - 1) * limit))
 	findOptions.SetLimit(int64(limit))
 
-	cursor, err := m.collection.Find(ctx, bson.M{}, findOptions)
+	if sortKey != "" {
+		findOptions.SetSort(bson.D{{sortKey, -1}})
+	}
+
+	if filter == nil {
+		filter = bson.M{}
+	}
+
+	cursor, err := m.collection.Find(ctx, filter, findOptions)
 	if err != nil {
 		return nil, fmt.Errorf("error finding entities: %w", err)
 	}

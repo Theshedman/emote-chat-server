@@ -12,7 +12,6 @@ import (
 	"github.com/labstack/echo/v4"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"log"
-	"time"
 )
 
 var upgrader = websocket.Upgrader{
@@ -89,9 +88,6 @@ func (c *Client) readLoop() {
 		}
 	}()
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
 	// Infinitely read messages from the clients
 	// and publish them to a message broker (RabbitMQ).
 	// This makes room for scalability as it prevents message loss
@@ -112,11 +108,25 @@ func (c *Client) readLoop() {
 
 		msgModel, err := dto.ToMessageModel(msg)
 		if err != nil {
-			log.Println(err)
+			log.Println("could not parse incoming message: ", err)
+		}
+
+		// Persist message to DB
+		msgRepository := repository.NewMessage()
+		ctx := context.TODO()
+		//defer cancel()
+
+		msgModel.SenderID = c.UserID
+		msgModel.Username = c.Username
+
+		newMsg, err := msgRepository.Create(ctx, msgModel)
+		if err != nil {
+			log.Println("failed to persist message to DB: ", err)
+
 			break
 		}
 
-		msgModelJson, err := json.Marshal(*msgModel)
+		msgModelJson, err := json.Marshal(dto.ToMessageDto(*newMsg))
 		if err != nil {
 			log.Println("failed to marshal message to json")
 			break
@@ -133,43 +143,14 @@ func (c *Client) readLoop() {
 func (c *Client) writeLoop() {
 	// Infinitely read messages from the queue,
 	// persist them to the DB and then send them to the clients.
-	var ctx context.Context
-	var cancel context.CancelFunc
 	for message := range c.Send {
-		var msgModel repository.MessageModel
-		err := json.Unmarshal(message, &msgModel)
-		if err != nil {
-			log.Println("Decoding message consumed from the queue failed: ", err)
-
-			break
-		}
-
-		// Persist message to DB
-		msgRepository := repository.NewMessage()
-		ctx, cancel = context.WithTimeout(context.Background(), 5*time.Second)
-		msgModel.SenderID = c.UserID
-		msgModel.Username = c.Username
-		newMsg, err := msgRepository.Create(ctx, &msgModel)
-		if err != nil {
-			log.Println("failed to persist message to DB: ", err)
-
-			break
-		}
-
-		msgModelJson, err := json.Marshal(newMsg)
-		if err != nil {
-			log.Println("failed to marshal message to json")
-			break
-		}
-
 		// Send messages to clients
-		err = c.Conn.WriteMessage(websocket.TextMessage, msgModelJson)
+		err := c.Conn.WriteMessage(websocket.TextMessage, message)
 		if err != nil {
 			fmt.Println("Error writing message to WebSocket:", err)
 			break
 		}
 	}
-	defer cancel()
 }
 
 func (sh *SocketHandler) ConsumeMessages(exchange, queueName string) {

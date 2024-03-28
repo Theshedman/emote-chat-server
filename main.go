@@ -32,6 +32,7 @@ func main() {
 		AllowOrigins: []string{"*"}, // This is only for demo's sake. CORS domains needed for production use
 		AllowMethods: []string{http.MethodGet, http.MethodPut, http.MethodPost, http.MethodDelete},
 	}))
+	e.Use(auth.AuthenticateWebsocketConnection)
 
 	// Load .env file to system environment
 	err := godotenv.Load()
@@ -56,7 +57,8 @@ func main() {
 	// Initialize MongoDB
 	repository.SetupDatabase()
 
-	// Public route for metrics
+	// Public route for health check and metrics
+	e.GET("/health", controller.Health)
 	e.GET("/metrics", echoprometheus.NewHandler())
 
 	// Auth route for signup and login,
@@ -68,10 +70,15 @@ func main() {
 	// Protected routes grouped according to their resources
 	protectedRoute := e.Group("", echojwt.WithConfig(auth.JwtCustomConfig()))
 
+	// Protected: Routes for the user resource
+	userRoute := protectedRoute.Group("/users")
+	userRoute.GET("", controller.GetUsers)
+
 	// Protected: Routes for the room resource
 	roomRoute := protectedRoute.Group("/rooms")
+	roomRoute.GET("/:roomId", controller.GetRoomById)
 	roomRoute.GET("", controller.GetRooms)
-	roomRoute.POST("/:roomName/join", controller.Join)
+	roomRoute.POST("/:roomName/join", controller.JoinRoom)
 
 	// Protected: Routes for the message resource
 	msgRoute := protectedRoute.Group("/messages")

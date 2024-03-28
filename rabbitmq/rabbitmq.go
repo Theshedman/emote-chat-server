@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"github.com/rabbitmq/amqp091-go"
 	"log"
+	"math/rand"
 	"os"
+	"time"
 )
 
 const (
@@ -24,17 +26,28 @@ func New() (*RabbitMQ, error) {
 		log.Fatal("RABBITMQ_URL environment variable not set")
 	}
 
-	conn, err := amqp091.Dial(uri)
-	if err != nil {
-		return nil, fmt.Errorf("failed to connect to RabbitMQ: %w", err)
-	}
+	for attempts := 1; ; attempts++ {
+		conn, err := amqp091.Dial(uri)
+		if err == nil {
+			ch, err := conn.Channel()
 
-	ch, err := conn.Channel()
-	if err != nil {
-		return nil, fmt.Errorf("failed to open RabbitMQ channel: %w", err)
-	}
+			if err != nil {
+				// Close connection on channel error
+				err := conn.Close()
+				if err != nil {
+					return nil, fmt.Errorf("failed to close RabbitMQ connection: %w", err)
+				}
 
-	return &RabbitMQ{conn: conn, channel: ch}, nil
+				return nil, fmt.Errorf("failed to open RabbitMQ channel: %w", err)
+			}
+
+			return &RabbitMQ{conn: conn, channel: ch}, nil
+		}
+
+		waitTime := time.Duration(attempts*5) * time.Second // Adjust backoff
+		log.Printf("Connection failed. Retrying in %v (attempt %d): %v", waitTime, attempts, err)
+		time.Sleep(waitTime + time.Duration(rand.Intn(1000))*time.Millisecond) // Add jitter
+	}
 }
 
 func (r *RabbitMQ) Close() {
@@ -62,21 +75,29 @@ func (r *RabbitMQ) DeclareExchange(name string) error {
 }
 
 func (r *RabbitMQ) Publish(ctx context.Context, exchange, routingKey string, body []byte) error {
-	if err := r.channel.PublishWithContext(
-		ctx,
-		exchange,   // exchange name
-		routingKey, // routing key (RoomID in our case)
-		false,
-		false,
-		amqp091.Publishing{
-			ContentType: "application/json",
-			Body:        body,
-		},
-	); err != nil {
-		return fmt.Errorf("failed to publish message: %w", err)
-	}
+	for { // Retry loop for publishing
+		if err := r.channel.PublishWithContext(
+			ctx,
+			exchange,
+			routingKey,
+			false,
+			false,
+			amqp091.Publishing{
+				ContentType: "application/json",
+				Body:        body,
+			},
+		); err != nil {
+			r.Close()
+			r, err = New() // Attempt to reconnect
+			if err != nil {
+				return fmt.Errorf("failed to reconnect for publishing: %w", err)
+			}
 
-	return nil
+			time.Sleep(1 * time.Second) // Example: 1-second delay
+		} else {
+			return nil // Success!
+		}
+	}
 }
 
 func (r *RabbitMQ) Consume(exchange, queueName string) (<-chan amqp091.Delivery, error) {
@@ -97,5 +118,36 @@ func (r *RabbitMQ) Consume(exchange, queueName string) (<-chan amqp091.Delivery,
 		return nil, fmt.Errorf("failed to consume messages: %w", err)
 	}
 
-	return msgs, nil
+	// Reconnection Logic
+	for {
+		select {
+		case _, ok := <-msgs:
+			if !ok {
+				// Channel closed, likely due to connection loss
+				r.Close()
+				r, err = New() // Attempt to reconnect
+				if err != nil {
+					return nil, fmt.Errorf("failed to reconnect: %w", err)
+				}
+
+				// Re-declare queue and re-bind
+				_, err = r.channel.QueueDeclare(queueName, true, false, false, false, nil)
+				if err != nil {
+					return nil, fmt.Errorf("failed to re-declare queue: %w", err)
+				}
+				err = r.channel.QueueBind(queueName, "", exchange, false, nil)
+				if err != nil {
+					return nil, fmt.Errorf("failed to re-bind queue: %w", err)
+				}
+
+				// Retry Consume
+				msgs, err = r.channel.Consume(queueName, "", true, false, false, false, nil)
+				if err != nil {
+					log.Printf("Failed to consume after reconnection: %v. Retrying...", err)
+				}
+			} else {
+				return msgs, nil // Successful consumption
+			}
+		}
+	}
 }

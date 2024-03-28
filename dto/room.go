@@ -12,6 +12,27 @@ type Room struct {
 	Participants []string `json:"participants"`
 }
 
+func ToRoomListDto(roomModel []**repository.RoomModel) []Room {
+	rooms := make([]Room, len(roomModel))
+
+	var participants []string
+	for i, room := range roomModel {
+		rooms[i] = Room{
+			ID:   (*room).ID.Hex(),
+			Name: (*room).Name,
+		}
+
+		for _, v := range (*room).Participants {
+			participants = append(participants, v.Hex())
+		}
+
+		rooms[i].Participants = participants
+	}
+
+	return rooms
+
+}
+
 func ToRoomDto(roomModel *repository.RoomModel) Room {
 	room := *roomModel
 
