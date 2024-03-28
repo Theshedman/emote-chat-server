@@ -21,6 +21,23 @@ type Message struct {
 	Timestamp time.Time `json:"timestamp"`
 }
 
+func ToMessageListDto(messageModel []**repository.MessageModel) []Message {
+	messages := make([]Message, len(messageModel))
+
+	for i, message := range messageModel {
+		messages[i] = Message{
+			ID:        (*message).ID.Hex(),
+			RoomID:    (*message).RoomID.Hex(),
+			SenderID:  (*message).SenderID.Hex(),
+			Content:   (*message).Content,
+			Username:  (*message).Username,
+			Timestamp: (*message).Timestamp,
+		}
+	}
+
+	return messages
+}
+
 func ToMessageDto(messageModel *repository.MessageModel) Message {
 	message := *messageModel
 

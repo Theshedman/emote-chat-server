@@ -20,6 +20,22 @@ type User struct {
 	Username  string `json:"username"`
 }
 
+func ToUserListDto(userModel []**repository.UserModel) []User {
+	users := make([]User, len(userModel))
+
+	for i, user := range userModel {
+		users[i] = User{
+			ID:        (*user).ID.Hex(),
+			FirstName: (*user).FirstName,
+			LastName:  (*user).LastName,
+			Username:  (*user).Username,
+		}
+	}
+
+	return users
+
+}
+
 func ToUserDto(userModel *repository.UserModel) User {
 	user := *userModel
 

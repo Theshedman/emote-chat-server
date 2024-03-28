@@ -14,9 +14,7 @@ import (
 	"time"
 )
 
-func Join(c echo.Context) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
+func JoinRoom(c echo.Context) error {
 
 	principal := auth.GetPrincipal(c)
 	participant, err := primitive.ObjectIDFromHex(principal.ID)
@@ -28,6 +26,23 @@ func Join(c echo.Context) error {
 	}
 
 	roomName := c.Param("roomName")
+	room, err := JoinARoom(roomName, participant)
+	if err != nil {
+		serverError := echo.ErrInternalServerError
+		serverError.Message = "failed to join room: " + err.Error()
+
+		return serverError
+	}
+
+	return c.JSON(http.StatusOK, echo.Map{
+		"data": dto.ToRoomDto(*room),
+	})
+}
+
+func JoinARoom(roomName string, participant primitive.ObjectID) (**repository.RoomModel, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
 	roomRepository := repository.NewRoom()
 
 	existingRoom, err := roomRepository.FindOne(ctx, bson.M{"name": roomName})
@@ -39,24 +54,20 @@ func Join(c echo.Context) error {
 		// a user should not join a room twice
 		for _, v := range (*existingRoom).Participants {
 			if v == participant {
-				return c.JSON(http.StatusOK, echo.Map{
-					"data": dto.ToRoomDto(*existingRoom),
-				})
+				return existingRoom, nil
 			}
 		}
 
 		(*existingRoom).Participants = append((*existingRoom).Participants, participant)
-		updateRoom, err := roomRepository.Update(ctx, (*existingRoom).ID.Hex(), *existingRoom)
+		updatedRoom, err := roomRepository.Update(ctx, (*existingRoom).ID.Hex(), *existingRoom)
 		if err != nil {
 			serverError := echo.ErrInternalServerError
 			serverError.Message = "failed to join room: " + err.Error()
 
-			return serverError
+			return nil, serverError
 		}
 
-		return c.JSON(http.StatusOK, echo.Map{
-			"data": dto.ToRoomDto(*updateRoom),
-		})
+		return updatedRoom, nil
 	}
 
 	var participants []primitive.ObjectID
@@ -67,15 +78,32 @@ func Join(c echo.Context) error {
 		Name:         roomName,
 		Participants: participants,
 	})
-	if err != nil {
-		serverError := echo.ErrInternalServerError
-		serverError.Message = "failed to join room: " + err.Error()
+	return newRoom, nil
+}
 
-		return serverError
+func GetRoomById(c echo.Context) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	roomIdString := c.Param("roomId")
+	roomId, err := primitive.ObjectIDFromHex(roomIdString)
+	if err != nil {
+		badRequest := echo.ErrBadRequest
+		badRequest.Message = "invalid roomId: " + roomIdString
+
+		return badRequest
+	}
+
+	roomRepository := repository.NewRoom()
+	room, err := roomRepository.FindOne(ctx, bson.M{"_id": roomId})
+	if err != nil {
+		log.Println("no room exist")
+
+		return echo.ErrNotFound
 	}
 
 	return c.JSON(http.StatusOK, echo.Map{
-		"data": dto.ToRoomDto(*newRoom),
+		"data": dto.ToRoomDto(*room),
 	})
 }
 
@@ -97,7 +125,7 @@ func GetRooms(c echo.Context) error {
 	}
 
 	roomRepository := repository.NewRoom()
-	rooms, err := roomRepository.Find(ctx, page, limit)
+	rooms, err := roomRepository.Find(ctx, bson.M{}, page, limit, "created_at")
 	if err != nil {
 		log.Println("no room exist")
 
@@ -105,6 +133,6 @@ func GetRooms(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, echo.Map{
-		"data": rooms,
+		"data": dto.ToRoomListDto(rooms),
 	})
 }

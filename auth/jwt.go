@@ -22,7 +22,8 @@ func JwtCustomConfig() echojwt.Config {
 		NewClaimsFunc: func(c echo.Context) jwt.Claims {
 			return new(JwtCustomClaims)
 		},
-		SigningKey: []byte(jwtSecret),
+		SigningKey:  []byte(jwtSecret),
+		TokenLookup: "header:Authorization:Bearer ,query:auth",
 	}
 }
 
@@ -32,7 +33,7 @@ func GenToken(userModel *repository.UserModel) (string, error) {
 		UserName: (*userModel).Username,
 		RegisteredClaims: jwt.RegisteredClaims{
 			Subject:   (*userModel).ID.Hex(),
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Minute * 15)),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Minute * 5)),
 		},
 	}
 
@@ -47,5 +48,12 @@ func GenToken(userModel *repository.UserModel) (string, error) {
 	}
 
 	return authToken, nil
+}
 
+func AuthenticateWebsocketConnection(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		c.Request().Header.Del("Origin")
+
+		return next(c)
+	}
 }
