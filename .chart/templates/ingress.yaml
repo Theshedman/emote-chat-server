@@ -11,6 +11,8 @@ metadata:
     cert-manager.io/cluster-issuer: {{ printf "%s-%s-%s-%s" "letsencrypt" .Values.app.env "emote-chat" "server" }}
     nginx.ingress.kubernetes.io/from-to-www-redirect: "true"
     nginx.ingress.kubernetes.io/proxy-body-size: 8m
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
 spec:
   ingressClassName: nginx
   tls:
