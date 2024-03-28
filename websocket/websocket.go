@@ -114,7 +114,6 @@ func (c *Client) readLoop() {
 		// Persist message to DB
 		msgRepository := repository.NewMessage()
 		ctx := context.TODO()
-		//defer cancel()
 
 		msgModel.SenderID = c.UserID
 		msgModel.Username = c.Username
