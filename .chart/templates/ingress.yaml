@@ -7,7 +7,7 @@ metadata:
     tier: {{ .Values.app.labels.tier }}
     role: {{ .Values.app.labels.role }}
   annotations:
-{{/*    nginx.ingress.kubernetes.io/ssl-redirect: "true"*/}}
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
     cert-manager.io/cluster-issuer: {{ printf "%s-%s-%s-%s" "letsencrypt" .Values.app.env "emote-chat" "server" }}
     nginx.ingress.kubernetes.io/from-to-www-redirect: "true"
     nginx.ingress.kubernetes.io/proxy-body-size: 8m
