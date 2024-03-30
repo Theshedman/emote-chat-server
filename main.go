@@ -72,13 +72,15 @@ func main() {
 
 	// Protected: Routes for the user resource
 	userRoute := protectedRoute.Group("/users")
+	userRoute.GET("/:userId", controller.GetUserById)
 	userRoute.GET("", controller.GetUsers)
 
 	// Protected: Routes for the room resource
 	roomRoute := protectedRoute.Group("/rooms")
 	roomRoute.GET("/:roomId", controller.GetRoomById)
 	roomRoute.GET("", controller.GetRooms)
-	roomRoute.POST("/:roomName/join", controller.JoinRoom)
+	//roomRoute.POST("/:roomName/join", controller.JoinRoom)
+	roomRoute.POST("/:type/join", controller.JoinRoom)
 
 	// Protected: Routes for the message resource
 	msgRoute := protectedRoute.Group("/messages")

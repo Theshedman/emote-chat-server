@@ -9,6 +9,7 @@ import (
 type Room struct {
 	ID           string   `json:"id"`
 	Name         string   `json:"name"`
+	Type         string   `json:"type"`
 	Participants []string `json:"participants"`
 }
 
@@ -16,13 +17,16 @@ func ToRoomListDto(roomModel []**repository.RoomModel) []Room {
 	rooms := make([]Room, len(roomModel))
 
 	var participants []string
-	for i, room := range roomModel {
+	for i, roomReference := range roomModel {
+		room := *roomReference
+
 		rooms[i] = Room{
-			ID:   (*room).ID.Hex(),
-			Name: (*room).Name,
+			ID:   room.ID.Hex(),
+			Type: room.Type,
+			Name: room.Name,
 		}
 
-		for _, v := range (*room).Participants {
+		for _, v := range room.Participants {
 			participants = append(participants, v.Hex())
 		}
 
@@ -44,6 +48,7 @@ func ToRoomDto(roomModel *repository.RoomModel) Room {
 	return Room{
 		ID:           room.ID.Hex(),
 		Name:         room.Name,
+		Type:         room.Type,
 		Participants: participants,
 	}
 
@@ -64,6 +69,7 @@ func ToRoomModel(room Room) (*repository.RoomModel, error) {
 
 	return &repository.RoomModel{
 		Name:         room.Name,
+		Type:         room.Type,
 		Participants: participants,
 	}, nil
 }

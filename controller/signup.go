@@ -58,8 +58,6 @@ func Signup(c echo.Context) error {
 		return fmt.Errorf("failed to generate auth token: %w", err)
 	}
 
-	_, _ = JoinARoom((*modelData).FirstName+" "+(*modelData).LastName, (*modelData).ID)
-
 	userDto := dto.ToUserDto(modelData)
 
 	return c.JSON(http.StatusOK, echo.Map{
